@@ -74,7 +74,11 @@ The `ObjectDetectionBot` class in `bot.py` handles incoming messages for image o
      ```
 
 - **Run the Object Detection Bot:**
-   - Start the YOLOv5 service:
+  - Start Ngrok to expose the local server:
+     ```bash
+     ngrok http 8443
+     ```
+   - Start the other services:
      ```bash
      docker-compose up --build
      ```
