@@ -54,6 +54,10 @@ services:
     env_file: .env_yolo
     #build: ./yolo5
     container_name: yolo5-app
+    depends_on:
+      - mongoDocker
+      - mongoDocRep1
+      - mongoDocRep2
     ports:
       - "8081:8081"
     networks:
