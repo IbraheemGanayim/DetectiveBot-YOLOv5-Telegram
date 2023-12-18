@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  mongoDocker:
+    image: mongo:5
+    command: mongod --replSet myReplicaSet --bind_ip localhost,mongoDocker
+    container_name: mongoDocker
+    volumes:
+      - mongoMainVol:/data/db
+    ports:
+      - "27017:27017"
+    networks:
+      - mongoCluster
+
+  mongoDocRep1:
+    image: mongo:5
+    command: mongod --replSet myReplicaSet --bind_ip localhost,mongoDocRep1
+    container_name: mongoDocRep1
+    volumes:
+      - mongoSec1Vol:/data/db
+    ports:
+      - "27018:27017"
+    networks:
+      - mongoCluster
+
+  mongoDocRep2:
+    image: mongo:5
+    command: mongod --replSet myReplicaSet --bind_ip localhost,mongoDocRep2
+    container_name: mongoDocRep2
+    volumes:
+      - mongoSec2Vol:/data/db
+    ports:
+      - "27019:27017"
+    networks:
+      - mongoCluster
+
+  polybot:
+    #image: ibraheemganayim/polybot:1.0.0
+    build: ./polybot
+    container_name: polybot-app
+    env_file: .env_poly
+    depends_on:
+      - mongoDocker
+      - mongoDocRep1
+      - mongoDocRep2
+
+    ports:
+      - "8443:8443"
+    networks:
+      - mongoCluster
+
+  yolo:
+    image: ibraheemganayim/yolo5-app:1.0.0
+    env_file: .env_yolo
+    #build: ./yolo5
+    container_name: yolo5-app
+    ports:
+      - "8081:8081"
+    networks:
+      - mongoCluster
+
+networks:
+  mongoCluster:
+    driver: bridge
+
+volumes:
+  mongoMainVol:
+  mongoSec1Vol:
+  mongoSec2Vol:

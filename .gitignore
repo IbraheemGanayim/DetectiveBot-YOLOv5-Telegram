@@ -1,0 +1,8 @@
+# .gitignore
+
+# Ignore environment files
+.env*
+snyk
+
+# Ignore Docker-related files
+docker-compose.override.yml
