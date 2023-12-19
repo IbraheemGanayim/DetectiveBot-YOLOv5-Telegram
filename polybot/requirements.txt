@@ -6,3 +6,4 @@ matplotlib
 requests
 boto3
 bardapi
+google.generativeai

@@ -35,7 +35,7 @@ services:
       - mongoCluster
 
   polybot:
-    image: ibraheemganayim/polybot-app:1.0.0
+    image: ibraheemganayim/polybot-app:1.1.0
     #build: ./polybot
     container_name: polybot-app
     env_file: .env_poly

@@ -7,6 +7,7 @@ import requests
 import boto3
 from botocore.exceptions import ClientError
 from bardapi import BardCookies
+#import google.generativeai as genai
 
 class Bot:
 
@@ -89,13 +90,20 @@ class ObjectDetectionBot(Bot):
 
     def handle_message(self, msg):
         
-        # for GOOGLE BARD API - Gemeni PRO
-        # cookie_dict = {
-        #         "__Secure-1PSID": os.environ['__Secure-1PSID'],
-        #         "__Secure-1PSIDTS": os.environ['__Secure-1PSIDTS'],
-        #         "__Secure-1PSIDCC": os.environ['__Secure-1PSIDCC'],
-        #     }
-        # bard = BardCookies(cookie_dict=cookie_dict)
+        if(os.environ['BARD_FLAG'] == 'go'):
+            #for GOOGLE BARD API - Gemeni PRO
+            cookie_dict = {
+                    "__Secure-1PSID": os.environ['__Secure-1PSID'],
+                    "__Secure-1PSIDTS": os.environ['__Secure-1PSIDTS'],
+                    "__Secure-1PSIDCC": os.environ['__Secure-1PSIDCC'],
+                }
+            bard = BardCookies(cookie_dict=cookie_dict)
+            
+            logger.info('\nBARD has been successfully configured.\n')
+
+            # GOOGLE_API_KEY=os.environ['GOOGLE_API_KEY']
+            # genai.configure(api_key=GOOGLE_API_KEY)
+            # model = genai.GenerativeModel('gemini-pro')
 
         if self.is_current_msg_photo(msg):
 
@@ -106,12 +114,12 @@ class ObjectDetectionBot(Bot):
             # TODO download the user photo (utilize download_user_photo)
             photo_path = self.download_user_photo(msg)
             
-            # TODO upload the photo to S3
             s3_bucket = os.environ['BUCKET_NAME']
 
             s3_path = "photos/" + os.path.basename(photo_path)
             
             #logger.info(f'\n1. UPLOAD PHOTO:\nPHOTO PATH: {photo_path}\nS3 PATH: {s3_path}\n')
+            # TODO upload the photo to S3
             uploaded = self.upload_to_s3(photo_path, s3_bucket, s3_path)
             if not uploaded:
                 self.delete_message(msg['chat']['id'], loading_msg.message_id)
@@ -136,19 +144,34 @@ class ObjectDetectionBot(Bot):
                     self.send_photo(msg['chat']['id'], photo_path)
                     
                     # Tell a joke with the prediction using GOOGLE BARD API - Gemeni PRO
-                    # for_joke = self.format_prediction_to_bard(prediction)
-                    # bard_prompt = f'Tell me a short joke that includes one or more of the following:{for_joke}'
-                    # bard_ans = bard.get_answer(bard_prompt)['content']
-                    # self.send_text(msg['chat']['id'], text=str(bard_ans))
+                    if(os.environ['BARD_FLAG'] == 'go'):
+                        for_joke = self.format_prediction_to_bard(prediction)
+                        bard_prompt = f'Tell me a short joke that includes one or more of the following:{for_joke}'
+                        #bard_ans = model.generate_content(bard_prompt)
+                        bans1 = bard.get_answer(bard_prompt)
+                        bard_ans = bans1['content']
+                        if(bans1['status_code'] == 200):
+                            self.send_text(msg['chat']['id'], text=str(bard_ans))
+                            logger.info('\nBARD answered to photo.\n')
+                        else:
+                            self.send_text(msg['chat']['id'], f'Your original message: {msg["text"]}\nTip: Send a photo!')
                     # self.delete_message(msg['chat']['id'], loading_msg.message_id)
                 else:
                     self.send_text(msg['chat']['id'], "Failed to get prediction from YOLOv5 service.")
                     self.delete_message(msg['chat']['id'], loading_msg.message_id)
         elif "text" in msg:
             # Answer using GOOGLE BARD API - Gemeni PRO
-            #bard_ans_txt = bard.get_answer(msg["text"])['content']
-            #self.send_text(msg['chat']['id'], f'{bard_ans_txt}')
-            self.send_text(msg['chat']['id'], f'Your original message: {msg["text"]}\nTip: Send a photo!')
+            if(os.environ['BARD_FLAG'] == 'go'):
+                bans = bard.get_answer(msg["text"])
+                bard_ans_txt = bans['content']
+                if(bans['status_code'] == 200):
+                    self.send_text(msg['chat']['id'], text=str(bard_ans_txt))
+                    logger.info('\nBARD answered to text.\n')
+                else:
+                    self.send_text(msg['chat']['id'], f'Your original message: {msg["text"]}\nTip: Send a photo!')
+                #bard_ans_txt = model.generate_content(msg["text"])
+            else:
+                self.send_text(msg['chat']['id'], f'Your original message: {msg["text"]}\nTip: Send a photo!')
         else:
             self.send_text(msg['chat']['id'], 'Unsupported message type.\nTip: Send a photo!')
 
